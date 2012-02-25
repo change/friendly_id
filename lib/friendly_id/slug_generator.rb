@@ -43,7 +43,7 @@ module FriendlyId
     def conflicts
       pkey  = sluggable.class.primary_key
       value = sluggable.send pkey
-      scope = sluggable.class.unscoped.where("#{column} = ? OR #{column} LIKE ?", normalized, wildcard)
+      scope = sluggable.class.unscoped.where("#{column} = ? OR (#{column} LIKE ? AND #{column} RLIKE ?)", normalized, wildcard, regexp)
       scope = scope.where("#{pkey} <> ?", value) unless sluggable.new_record?
       scope = scope.order("LENGTH(#{column}) DESC, #{column} DESC")
     end
@@ -57,7 +57,11 @@ module FriendlyId
     end
 
     def wildcard
-      "#{normalized}#{separator}%"
+      "#{normalized}#{separator}%".gsub(/_/, '\\_')
+    end
+
+    def regexp
+      "^#{normalized}#{separator}[0-9]+$"
     end
   end
 end

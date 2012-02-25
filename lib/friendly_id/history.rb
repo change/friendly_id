@@ -122,7 +122,7 @@ method.
         pkey  = sluggable.class.primary_key
         value = sluggable.send pkey
 
-        scope = sluggable.class.unscoped.includes(:slugs).where("#{Slug.quoted_table_name}.slug = ? OR #{Slug.quoted_table_name}.slug LIKE ?", normalized, wildcard)
+        scope = sluggable.class.unscoped.includes(:slugs).where("#{Slug.quoted_table_name}.slug = ? OR (#{Slug.quoted_table_name}.slug LIKE ? AND #{Slug.quoted_table_name}.slug RLIKE ?)", normalized, wildcard, regexp)
         scope = scope.where(Slug.table_name => {:sluggable_type => sluggable.class.name})
         scope = scope.where("#{sluggable.class.table_name}.#{pkey} <> ?", value) unless sluggable.new_record?
         scope = scope.order("LENGTH(#{Slug.quoted_table_name}.slug) DESC, #{Slug.quoted_table_name}.slug DESC")
