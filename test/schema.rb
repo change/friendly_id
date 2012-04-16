@@ -63,7 +63,7 @@ module FriendlyId
         private
 
         def slugged_tables
-          %w[journalists articles novelists novels manuals translated_articles]
+          %w[journalists articles novelists novels manuals leaflets translated_articles]
         end
 
         def simple_tables
