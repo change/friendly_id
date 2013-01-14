@@ -200,31 +200,41 @@ often better and easier to use {FriendlyId::Slugged slugs}.
     #   on first access. If you're concerned about thread safety, then be sure
     #   to invoke {#friendly_id} in your class for each model.
     def friendly_id_config
-      @friendly_id_config or begin
-        @friendly_id_config = base_class.friendly_id_config.dup.tap do |config|
-          config.model_class = self
-          @relation_class = base_class.send(:relation_class)
-        end
+      @friendly_id_config ||= base_class.friendly_id_config.dup.tap do |config|
+        config.model_class = self
+        @relation_class = base_class.send(:relation_class)
       end
     end
 
     private
 
-    # Gets an instance of an anonymous subclass of ActiveRecord::Relation.
+    # Gets an instance of an the relation class.
+    #
+    # With FriendlyId this will be a subclass of ActiveRecord::Relation, rather than
+    # Relation itself, in order to avoid tainting all Active Record models with
+    # FriendlyId.
+    #
+    # Note that this method is essentially copied and pasted from Rails 3.2.9.rc1,
+    # with the exception of changing the relation class. Obviously this is less than
+    # ideal, but I know of no better way to accomplish this.
     # @see #relation_class
-    def relation
-      @relation = nil unless @relation.class <= relation_class
-      @relation ||= relation_class.new(self, arel_table)
-      super
+    def relation #:nodoc:
+      relation = relation_class.new(self, arel_table)
+
+      if finder_needs_type_condition?
+        relation.where(type_condition).create_with(inheritance_column.to_sym => sti_name)
+      else
+        relation
+      end
     end
 
-    # Gets an anonymous subclass of the model's relation class.
+    # Gets (and if necessary, creates) a subclass of the model's relation class.
     #
     # Rather than including FriendlyId's overridden finder methods in
-    # ActiveRecord::Relation directly, FriendlyId adds them to the anonymous
-    # subclass, and makes #relation return an instance of this class. By doing
-    # this, we ensure that only models that specifically extend FriendlyId have
-    # their finder methods overridden.
+    # ActiveRecord::Relation directly, FriendlyId adds them to a subclass
+    # specific to the AR model, and makes #relation return an instance of this
+    # class. By doing this, we ensure that only models that specifically extend
+    # FriendlyId have their finder methods overridden.
     #
     # Note that this method does not directly subclass ActiveRecord::Relation,
     # but rather whatever class the @relation class instance variable is an
@@ -241,10 +251,16 @@ often better and easier to use {FriendlyId::Slugged slugs}.
     # revert back to the old behavior of simply extending
     # ActiveRecord::Relation.
     def relation_class
-      @relation_class ||= Class.new(relation_without_friendly_id.class) do
-        alias_method :find_one_without_friendly_id, :find_one
-        alias_method :exists_without_friendly_id?, :exists?
-        include FriendlyId::FinderMethods
+      @relation_class or begin
+        @relation_class = Class.new(relation_without_friendly_id.class) do
+          alias_method :find_one_without_friendly_id, :find_one
+          alias_method :exists_without_friendly_id?, :exists?
+          include FriendlyId::FinderMethods
+        end
+        # Set a name so that model instances can be marshalled. Use a
+        # ridiculously long name that will not conflict with anything.
+        # TODO: just use the constant, no need for the @relation_class variable.
+        const_set('FriendlyIdActiveRecordRelation', @relation_class)
       end
     end
   end
@@ -267,9 +283,9 @@ often better and easier to use {FriendlyId::Slugged slugs}.
     # Either the friendly_id, or the numeric id cast to a string.
     def to_param
       if diff = changes[friendly_id_config.query_field]
-        diff.first
+        diff.first || diff.second
       else
-        friendly_id.present? ? friendly_id : id.to_s
+        friendly_id.presence || super
       end
     end
   end

@@ -31,8 +31,7 @@ module FriendlyId
     end
 
     def extract_sequence_from_slug(slug)
-      # Don't assume that the separator is unique in the slug.
-      slug.gsub(/^#{Regexp.quote(normalized)}(#{Regexp.quote(separator)})?/, '').to_i
+      slug.split("#{normalized}#{separator}").last.to_i
     end
 
     def column
@@ -60,7 +59,10 @@ module FriendlyId
       base << "ESCAPE '\\'" if sluggable.connection.adapter_name =~ /sqlite/i
       scope = sluggable_class.unscoped.where(base, normalized, wildcard)
       scope = scope.where("#{pkey} <> ?", value) unless sluggable.new_record?
-      scope = scope.order("LENGTH(#{column}) DESC, #{column} DESC")
+      
+      length_command = "LENGTH"
+      length_command = "LEN" if sluggable.connection.adapter_name =~ /sqlserver/i
+      scope = scope.order("#{length_command}(#{column}) DESC, #{column} DESC")
     end
 
     def friendly_id_config

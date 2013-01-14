@@ -1,6 +1,6 @@
 # FriendlyId
 
-[![Build Status](http://travis-ci.org/norman/friendly_id.png)](http://travis-ci.org/norman/friendly_id)
+[![Build Status](https://travis-ci.org/norman/friendly_id.png)](https://travis-ci.org/norman/friendly_id)
 
 FriendlyId is the "Swiss Army bulldozer" of slugging and permalink plugins for
 Ruby on Rails. It allows you to create pretty URLs and work with human-friendly
@@ -49,7 +49,7 @@ You might also want to watch Ryan Bates's [Railscast on FriendlyId](http://rails
 
     cd my_app
 
-    gem "friendly_id", "~> 4.0.1"
+    gem "friendly_id", "~> 4.0.9" # Note: You MUST use 4.0.9 or greater for Rails 3.2.10+
 
     rails generate scaffold user name:string slug:string
 
@@ -103,7 +103,7 @@ article](http://yourbugreportneedsmore.info/).
 ## Thanks and Credits
 
 FriendlyId was originally created by Norman Clarke and Adrian Mugnolo, with
-significant help early in its life by Emilio Tagua. I'm deeply gratful for the
+significant help early in its life by Emilio Tagua. I'm deeply grateful for the
 generous contributions over the years from [many
 volunteers](https://github.com/norman/friendly_id/contributors).
 
@@ -128,7 +128,8 @@ should be!
 
 ## License
 
-Copyright (c) 2008-2012 Norman Clarke, released under the MIT license.
+Copyright (c) 2008-2012 Norman Clarke and contributors, released under the MIT
+license.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

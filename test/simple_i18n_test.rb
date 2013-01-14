@@ -1,6 +1,6 @@
 require "helper"
 
-class I18nTest < MiniTest::Unit::TestCase
+class SimpleI18nTest < MiniTest::Unit::TestCase
   include FriendlyId::Test
 
   class Journalist < ActiveRecord::Base
@@ -8,7 +8,11 @@ class I18nTest < MiniTest::Unit::TestCase
     friendly_id :name, :use => :simple_i18n
   end
 
-  test "friendly_id should return a the current locale's slug" do
+  def setup
+    I18n.locale = :en
+  end
+
+  test "friendly_id should return the current locale's slug" do
     journalist = Journalist.new(:name => "John Doe")
     journalist.slug_es = "juan-fulano"
     journalist.valid?
@@ -55,6 +59,17 @@ class I18nTest < MiniTest::Unit::TestCase
       I18n.with_locale(:es) do
         assert_equal "juan-fulano", journalist.to_param
       end
+    end
+  end
+
+  test "set friendly_id should fall back default locale when none is given" do
+    transaction do
+      journalist = I18n.with_locale(:es) do
+        Journalist.create!(:name => "Juan Fulano")
+      end
+      journalist.set_friendly_id("John Doe")
+      journalist.save!
+      assert_equal "john-doe", journalist.slug_en
     end
   end
 
