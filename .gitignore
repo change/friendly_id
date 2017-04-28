@@ -10,3 +10,5 @@ coverage
 *.rbc
 *.lock
 .rbx
+
+*.pem
